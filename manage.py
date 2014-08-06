@@ -25,12 +25,13 @@ def import_ai(ai_db, username='', password=''):
     try:
         db_id = ai_db
         client = ActivityInfoClient(username, password)
-        db_info = client.get_database(db_id)
 
-        print db.connection
+        print app.config['MONGODB_SETTINGS']
+        print db.connection.database_names()
         ai = db.connection[app.config['MONGODB_SETTINGS']['db']]
         # store the whole database for future reference
         print 'Pulling database...'
+        db_info = client.get_database(db_id)
         ai.databases.update({'_id': db_id}, db_info, upsert=True)
         # split out all the attribute groups into a separate collection
         attribs = ai.databases.aggregate([
