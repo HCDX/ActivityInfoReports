@@ -1,3 +1,4 @@
+import os
 
 from flask import Flask
 
@@ -11,7 +12,11 @@ app = Flask(__name__)
 # Create dummy secrey key so we can use sessions
 app.config['SECRET_KEY'] = '123456790'
 app.config['MONGODB_SETTINGS'] = {
-    'DB': 'ai'
+    'db': os.environ.get('MONGODB_DATABASE', 'ai'),
+    'username': os.environ.get('MONGODB_USERNAME', None),
+    'password': os.environ.get('MONGODB_PASSWORD', None),
+    'host': os.environ.get('MONGODB_HOST', None),
+    'port': os.environ.get('MONGODB_PORT', None),
 }
 
 # Create models

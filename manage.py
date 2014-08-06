@@ -12,21 +12,20 @@ from flask.ext.script import (
 from pymongo import MongoClient
 from activtyinfo_client import ActivityInfoClient
 
-from aggregator import app, Report, Attribute
+from aggregator import app, Report, Attribute, db
 
 manager = Manager(app)
 
 @manager.command
-def import_ai(db, username='', password=''):
+def import_ai(ai_db, username='', password=''):
     """
     Imports data from Activity Info
     """
-    db_id = db
+    db_id = ai_db
     client = ActivityInfoClient(username, password)
     db_info = client.get_database(db_id)
 
-    mongo = MongoClient()
-    ai = mongo['ai']
+    ai = db.connection['ai']
     # store the whole database for future reference
     print 'Pulling database...'
     ai.databases.update({'_id': db_id}, db_info, upsert=True)
@@ -70,7 +69,7 @@ def import_ai(db, username='', password=''):
                         indicator_id=indicator['indicatorId'],
                         indicator_name=indicator['indicatorName'],
                         value=indicator['value'],
-                        comments=site['comments']
+                        comments=site.get('comments', None)
                     )
                     if created:
                         for a in attributes:
