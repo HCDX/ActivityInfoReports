@@ -1,5 +1,6 @@
 __author__ = 'jcranwellward'
 
+import os
 import datetime
 
 from flask.ext.script import (
@@ -26,9 +27,9 @@ def import_ai(ai_db, username='', password=''):
         db_id = ai_db
         client = ActivityInfoClient(username, password)
 
-        print app.config['MONGODB_SETTINGS']
-        print db.connection.database_names()
-        ai = db.connection[app.config['MONGODB_SETTINGS']['db']]
+        ai = MongoClient(
+            os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))[
+            os.environ.get('MONGODB_DATABASE', 'ai')]
         # store the whole database for future reference
         print 'Pulling database...'
         db_info = client.get_database(db_id)
