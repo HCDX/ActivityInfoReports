@@ -90,7 +90,7 @@ def import_ai(ai_db, username='', password=''):
                                 report.value
                             )
     except Exception as exp:
-        print str(exp)
+        print str(exp).encode()
 
 
 # Turn on debugger by default and reloader
