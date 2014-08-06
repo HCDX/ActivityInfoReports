@@ -27,6 +27,7 @@ def import_ai(ai_db, username='', password=''):
         client = ActivityInfoClient(username, password)
         db_info = client.get_database(db_id)
 
+        print db.connection
         ai = db.connection[app.config['MONGODB_SETTINGS']['db']]
         # store the whole database for future reference
         print 'Pulling database...'
