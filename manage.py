@@ -69,7 +69,8 @@ def import_ai(db, username='', password=''):
                         location_y=site['location'].get('latitude', None),
                         indicator_id=indicator['indicatorId'],
                         indicator_name=indicator['indicatorName'],
-                        value=indicator['value']
+                        value=indicator['value'],
+                        comments=site['comments']
                     )
                     if created:
                         for a in attributes:

@@ -10,7 +10,9 @@ app = Flask(__name__)
 
 # Create dummy secrey key so we can use sessions
 app.config['SECRET_KEY'] = '123456790'
-app.config['MONGODB_SETTINGS'] = {'DB': 'ai'}
+app.config['MONGODB_SETTINGS'] = {
+    'DB': 'ai'
+}
 
 # Create models
 db = MongoEngine()
@@ -37,6 +39,7 @@ class Report(db.Document):
     indicator_id = db.IntField()
     indicator_name = db.StringField()
     value = db.DecimalField()
+    comments = db.StringField()
     attributes = db.ListField(
         db.EmbeddedDocumentField(Attribute)
     )
