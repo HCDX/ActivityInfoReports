@@ -8,7 +8,7 @@ from flask.ext.admin.contrib.mongoengine import ModelView
 
 # Create application
 app = Flask(__name__)
-
+app.config['DEBUG'] = True
 # Create dummy secrey key so we can use sessions
 app.config['SECRET_KEY'] = '123456790'
 app.config['MONGODB_SETTINGS'] = {
