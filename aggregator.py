@@ -16,7 +16,7 @@ app.config['MONGODB_SETTINGS'] = {
     'username': os.environ.get('MONGODB_USERNAME', None),
     'password': os.environ.get('MONGODB_PASSWORD', None),
     'host': os.environ.get('MONGODB_HOST', None),
-    'port': os.environ.get('MONGODB_PORT', None),
+    'port': int(os.environ.get('MONGODB_PORT', 27017)),
 }
 
 # Create models
