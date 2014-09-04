@@ -1,1 +1,1 @@
-web: gunicorn aggregator:app
+web: python manage.py runserver
