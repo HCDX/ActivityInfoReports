@@ -32,6 +32,7 @@ class Attribute(db.EmbeddedDocument):
 
 class Report(db.Document):
     date = db.StringField()
+    site_id = db.IntField()
     category = db.StringField()
     activity_id = db.IntField()
     activity = db.StringField()
@@ -63,6 +64,17 @@ class ReportView(ModelView):
         'partner_name',
         'location_name',
         'indicator_name',
+        'comments',
+    ]
+    column_list = [
+        'date',
+        'category',
+        'activity',
+        'partner_name',
+        'location_name',
+        'indicator_name',
+        'value',
+        'comments',
     ]
 
     column_searchable_list = column_filters
