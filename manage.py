@@ -175,9 +175,9 @@ def import_ai(ai_db, username='', password=''):
 
                         print u'Created report: {} -> {} -> {} -> {} = {}'.format(
                             report.date,
-                            report.location_name,
-                            report.partner_name,
-                            report.indicator_name,
+                            report.location_name.encode('UTF-8'),
+                            report.partner_name.encode('UTF-8'),
+                            report.indicator_name.encode('UTF-8'),
                             report.value
                         )
 
