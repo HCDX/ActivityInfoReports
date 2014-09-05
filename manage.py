@@ -178,7 +178,7 @@ def import_ai(ai_db, username='', password=''):
                             report.location_name.encode('UTF-8'),
                             report.partner_name.encode('UTF-8'),
                             report.indicator_name.encode('UTF-8'),
-                            report.value.encode('UTF-8'),
+                            report.value
                         )
 
                     report.save()
