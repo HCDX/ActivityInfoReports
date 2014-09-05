@@ -139,7 +139,7 @@ def import_ai(ai_db, username='', password=''):
                 {'name': 1, 'mandatory': 1, "attributes.$": 1}
             )]
 
-            print 'Pulling reports for site: {} - {}'.format(
+            print '     Pulling reports for site: {} - {}'.format(
                 site['id'],
                 site['location']['name'].encode('UTF-8')
             )
@@ -173,12 +173,12 @@ def import_ai(ai_db, username='', password=''):
                                 )
                             )
 
-                        print u'Created report: {} -> {} -> {} -> {} = {}'.format(
+                        print '        Created report: {} -> {} -> {} -> {} = {}'.format(
                             report.date,
                             report.location_name.encode('UTF-8'),
                             report.partner_name.encode('UTF-8'),
                             report.indicator_name.encode('UTF-8'),
-                            report.value
+                            report.value.encode('UTF-8'),
                         )
 
                     report.save()
