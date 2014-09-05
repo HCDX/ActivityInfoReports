@@ -5,3 +5,4 @@ git+https://github.com/mrjoes/flask-admin.git
 git+https://github.com/UNICEFLebanonInnovation/ActvityInfoPython.git
 gunicorn
 cartodb
+pandas

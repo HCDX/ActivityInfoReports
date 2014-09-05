@@ -1,10 +1,16 @@
 import os
+import StringIO, datetime
+
+from pandas import DataFrame
 
 from flask import Flask
-
+from flask import redirect
+from flask import request
+from flask import send_file
 from flask.ext import admin
 from flask.ext.mongoengine import MongoEngine
 from flask.ext.admin.contrib.mongoengine import ModelView
+from flask.ext.admin import expose
 
 # Create application
 app = Flask(__name__)
@@ -56,6 +62,7 @@ class ReportView(ModelView):
     can_create = False
     can_delete = False
     can_edit = False
+    list_template = 'list.html'
 
     column_filters = [
         'date',
@@ -90,6 +97,41 @@ class ReportView(ModelView):
         }
     }
 
+    @expose('/export')
+    def export(self):
+        # Grab parameters from URL
+        page, sort_idx, sort_desc, search, filters = self._get_list_extra_args()
+        sort_column = self._get_column_by_idx(sort_idx)
+        if sort_column is not None:
+            sort_column = sort_column[0]
+
+        # Get count and data
+        self.page_size = request.args.get('count', 0, type=int)
+        count, data = self.get_list(
+            None,
+            sort_column,
+            sort_desc,
+            search,
+            filters
+        )
+
+        dicts = []
+        for report in data:
+            dicts.append(report.to_mongo().to_dict())
+        df = DataFrame.from_records(dicts, columns=self.column_list)
+
+        buffer = StringIO.StringIO()  # use stringio for temp file
+        df.to_csv(buffer, encoding='utf-8')
+        buffer.seek(0)
+
+        filename = "ai_reports_" + datetime.datetime.now().strftime("%Y_%m_%d_%H_%M") + ".csv"
+        return send_file(
+            buffer,
+            attachment_filename=filename,
+            as_attachment=True,
+            mimetype='text/csv'
+        )
+
 
 # Create admin
 admin = admin.Admin(app, 'ActivityInfo Reports')
@@ -101,7 +143,7 @@ admin.add_view(ReportView(Report))
 # Flask views
 @app.route('/')
 def index():
-    return '<a href="/admin/">Click me to get to Admin!</a>'
+    return redirect('/admin')
 
 
 if __name__ == '__main__':
