@@ -1,5 +1,6 @@
 import os
-import StringIO, datetime
+import StringIO
+import datetime
 
 from pandas import DataFrame
 
@@ -11,6 +12,14 @@ from flask.ext import admin
 from flask.ext.mongoengine import MongoEngine
 from flask.ext.admin.contrib.mongoengine import ModelView
 from flask.ext.admin import expose
+from flask.ext.restful import (
+    reqparse,
+    abort,
+    Api,
+    fields,
+    marshal_with,
+    Resource
+)
 
 # Create application
 app = Flask(__name__)
@@ -29,6 +38,23 @@ app.config['MONGODB_SETTINGS'] = {
 db = MongoEngine()
 db.init_app(app)
 
+report_fields = {
+    'date': fields.DateTime,
+    'category': fields.String,
+    'activity': fields.String,
+    'partner_name': fields.String,
+    'location_name': fields.String,
+    'indicator_name': fields.String,
+    'value': fields.String,
+    'comments': fields.String
+}
+
+
+class Report(Resource):
+    @marshal_with(report_fields)
+    def get(self, **kwargs):
+        return Report
+
 
 # Define mongoengine documents
 class Attribute(db.EmbeddedDocument):
@@ -39,6 +65,7 @@ class Attribute(db.EmbeddedDocument):
 class Report(db.Document):
     date = db.StringField()
     site_id = db.IntField()
+    p_code = db.StringField()
     category = db.StringField()
     activity_id = db.IntField()
     activity = db.StringField()
@@ -66,6 +93,7 @@ class ReportView(ModelView):
 
     column_filters = [
         'date',
+        'p_code',
         'category',
         'activity',
         'partner_name',
@@ -79,6 +107,7 @@ class ReportView(ModelView):
         'activity',
         'partner_name',
         'location_name',
+        'p_code',
         'indicator_name',
         'value',
         'comments',

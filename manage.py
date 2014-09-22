@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 __author__ = 'jcranwellward'
 
-import os
+import os, re
 import random
 import datetime
 
@@ -24,6 +24,8 @@ manager = Manager(app)
 ai = MongoClient(
     os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))[
     os.environ.get('MONGODB_DATABASE', 'ai')]
+
+
 
 
 @manager.command
@@ -163,6 +165,14 @@ def import_ai(ai_db, username='', password=''):
                     report.location_y = site['location'].get('latitude', None)
                     report.indicator_name = indicator['indicatorName']
                     report.comments = site.get('comments', None)
+
+                    location = ai.locations.find_one({'ai_id': report.location_id})
+                    if location:
+                        report.p_code = location['p_code']
+                    elif report.comments:
+                        matches = re.search(r'(\d{5}-\d?\d-\d{3})', report.comments)
+                        if matches:
+                            report.p_code = matches.group(1)
 
                     if created:
                         for a in attributes:
