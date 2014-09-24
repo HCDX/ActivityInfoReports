@@ -178,6 +178,11 @@ class ReportResource(Resource):
         'partner_name': [ops.Exact, ops.Startswith],
     }
 
+    def get_objects(self, all=False, qs=None, qfilter=None):
+        return super(ReportResource, self).get_objects(
+            all=True, qs=qs, qfilter=qfilter
+        )
+
 
 @api.register(name='reports', url='/reports/')
 class ReportsView(ResourceView):
