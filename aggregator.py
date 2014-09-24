@@ -158,14 +158,25 @@ class AttributeResource(Resource):
     document = Attribute
 
 
+class NeNone(ops.Ne):
+
+    def apply(self, queryset, field, value, negate=False):
+        # convert nulls to python None
+        if value == u'null':
+            value = None
+        return super(NeNone, self).apply(queryset, field, value)
+
+
 class ReportResource(Resource):
     document = Report
     related_resources = {
         'attributes': AttributeResource,
     }
     filters = {
+        'p_code': [NeNone, ops.Exact],
         'partner_name': [ops.Exact, ops.Startswith],
     }
+
 
 @api.register(name='reports', url='/reports/')
 class ReportsView(ResourceView):
