@@ -1,1 +1,1 @@
-web: gunicorn aggregator:app --log-file -
+web: gunicorn aggregator:app --workers $WEB_CONCURRENCY --log-file -
