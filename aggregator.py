@@ -168,6 +168,7 @@ class NeNone(ops.Ne):
 
 
 class ReportResource(Resource):
+    paginate = False
     document = Report
     related_resources = {
         'attributes': AttributeResource,
