@@ -8,3 +8,4 @@ git+https://github.com/UNICEFLebanonInnovation/ActvityInfoPython.git
 gunicorn
 cartodb
 pandas
+cleancat
