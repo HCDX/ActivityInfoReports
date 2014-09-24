@@ -26,8 +26,6 @@ ai = MongoClient(
     os.environ.get('MONGODB_DATABASE', 'ai')]
 
 
-
-
 @manager.command
 def update_sites(
         api_key='cad5c2fd1aa5236083743f54264b203d903f3a06',

@@ -12,18 +12,17 @@ from flask.ext import admin
 from flask.ext.mongoengine import MongoEngine
 from flask.ext.admin.contrib.mongoengine import ModelView
 from flask.ext.admin import expose
-from flask.ext.restful import (
-    reqparse,
-    abort,
-    Api,
-    fields,
-    marshal_with,
-    Resource
-)
+from flask.ext.mongorest import MongoRest
+from flask.ext.mongorest.views import ResourceView
+from flask.ext.mongorest.resources import Resource
+from flask.ext.mongorest import operators as ops
+from flask.ext.mongorest import methods
+
 
 # Create application
 app = Flask(__name__)
 app.config['DEBUG'] = True
+
 # Create dummy secrey key so we can use sessions
 app.config['SECRET_KEY'] = '123456790'
 app.config['MONGODB_SETTINGS'] = {
@@ -37,23 +36,6 @@ app.config['MONGODB_SETTINGS'] = {
 # Create models
 db = MongoEngine()
 db.init_app(app)
-
-report_fields = {
-    'date': fields.DateTime,
-    'category': fields.String,
-    'activity': fields.String,
-    'partner_name': fields.String,
-    'location_name': fields.String,
-    'indicator_name': fields.String,
-    'value': fields.String,
-    'comments': fields.String
-}
-
-
-class Report(Resource):
-    @marshal_with(report_fields)
-    def get(self, **kwargs):
-        return Report
 
 
 # Define mongoengine documents
@@ -168,6 +150,27 @@ admin = admin.Admin(app, 'ActivityInfo Reports')
 # Add views
 admin.add_view(ReportView(Report))
 
+# Add API
+api = MongoRest(app)
+
+
+class AttributeResource(Resource):
+    document = Attribute
+
+
+class ReportResource(Resource):
+    document = Report
+    related_resources = {
+        'attributes': AttributeResource,
+    }
+    filters = {
+        'partner_name': [ops.Exact, ops.Startswith],
+    }
+
+@api.register(name='reports', url='/reports/')
+class ReportsView(ResourceView):
+    resource = ReportResource
+    methods = [methods.List]
 
 # Flask views
 @app.route('/')

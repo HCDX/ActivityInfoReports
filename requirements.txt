@@ -1,7 +1,8 @@
 Flask
+Flask-Views
 Flask-Script
 Flask-MongoEngine
-flask-restful
+git+https://github.com/jamescw/flask-mongorest.git
 git+https://github.com/mrjoes/flask-admin.git
 git+https://github.com/UNICEFLebanonInnovation/ActvityInfoPython.git
 gunicorn
