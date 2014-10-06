@@ -10,3 +10,4 @@ cartodb
 pandas
 cleancat
 mimerender
+raven[flask]

@@ -1,8 +1,10 @@
 import os
 import StringIO
 import datetime
+import logging
 
 from pandas import DataFrame
+from raven.contrib.flask import Sentry
 
 from flask import Flask
 from flask import redirect
@@ -32,6 +34,7 @@ app.config['MONGODB_SETTINGS'] = {
     'host': os.environ.get('MONGODB_HOST', None),
     'port': int(os.environ.get('MONGODB_PORT', 27017)),
 }
+sentry = Sentry(app, logging=True, level=logging.ERROR)
 
 # Create models
 db = MongoEngine()

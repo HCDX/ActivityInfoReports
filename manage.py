@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 __author__ = 'jcranwellward'
 
+import logging
 import os, re
 import random
 import datetime
@@ -17,7 +18,7 @@ from pymongo import MongoClient
 from activtyinfo_client import ActivityInfoClient
 from cartodb import CartoDBAPIKey, CartoDBException
 
-from aggregator import app, Report, Attribute, db
+from aggregator import app, Report, Attribute, db, sentry
 
 manager = Manager(app)
 
@@ -109,6 +110,7 @@ def import_ai(ai_db, username='', password=''):
     Imports data from Activity Info
     """
 
+    reports_created = 0
     db_id = ai_db
     client = ActivityInfoClient(username, password)
 
@@ -190,6 +192,9 @@ def import_ai(ai_db, username='', password=''):
                         )
 
                     report.save()
+
+    sentry.captureMessage('AI import finished, {} new reports created'.format(reports_created),
+                          level=logging.INFO)
 
 
 # Turn on debugger by default and reloader
