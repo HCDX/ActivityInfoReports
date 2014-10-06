@@ -121,6 +121,8 @@ def import_ai(ai_db, username='', password=''):
     # store the whole database for future reference
     print u'Pulling database...'
     db_info = client.get_database(db_id)
+    sentry.captureMessage('AI import started for database: {}'.format(db_info['name']))
+
     ai.databases.update({'_id': db_id}, db_info, upsert=True)
     # split out all the attribute groups into a separate collection
     attribs = ai.databases.aggregate([
