@@ -11,3 +11,4 @@ pandas
 cleancat
 mimerender
 raven[flask]
+requests

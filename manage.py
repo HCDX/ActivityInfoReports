@@ -6,6 +6,8 @@ import logging
 import os, re
 import random
 import datetime
+import requests
+import json
 
 from flask.ext.script import (
     Command,
@@ -121,8 +123,10 @@ def import_ai(ai_db, username='', password=''):
     # store the whole database for future reference
     print u'Pulling database...'
     db_info = client.get_database(db_id)
-    sentry.captureMessage('AI import started for database: {}'.format(db_info['name']),
-                          level=logging.INFO)
+    requests.post(
+        'https://hooks.slack.com/services/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',
+        data=json.dumps({'text': 'AI import started for database: {}'.format(db_info['name'])})
+    )
 
     ai.databases.update({'_id': db_id}, db_info, upsert=True)
     # split out all the attribute groups into a separate collection
@@ -196,8 +200,10 @@ def import_ai(ai_db, username='', password=''):
 
                     report.save()
 
-    sentry.captureMessage('AI import finished, {} new reports created'.format(reports_created),
-                          level=logging.INFO)
+    requests.post(
+        'https://hooks.slack.com/services/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',
+        data=json.dumps({'text': 'AI import finished, {} site reports created'.format(reports_created)})
+    )
 
 
 # Turn on debugger by default and reloader
