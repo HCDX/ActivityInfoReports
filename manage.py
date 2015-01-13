@@ -143,10 +143,12 @@ def import_ai(ai_db, username='', password=''):
         print u'Pulling sites for activity: {} - {}'.format(activity['id'], activity['name'])
         sites = client.get_sites(activity=activity['id'], include_monthly_reports=False)
         for site in sites:
-            attributes = [attr for attr in ai.attributeGroups.find(
-                {'attributes.id': {'$in': site['attributes']}},
-                {'name': 1, 'mandatory': 1, "attributes.$": 1}
-            )]
+            attributes = []
+            if 'attributes' in site:
+                attributes = [attr for attr in ai.attributeGroups.find(
+                    {'attributes.id': {'$in': site['attributes']}},
+                    {'name': 1, 'mandatory': 1, "attributes.$": 1}
+                )]
 
             print '     Pulling reports for site: {} - {}'.format(
                 site['id'],
@@ -176,6 +178,14 @@ def import_ai(ai_db, username='', password=''):
                     location = ai.locations.find_one({'ai_id': report.location_id})
                     if location:
                         report.p_code = location['p_code']
+                        report.location_type = location['type']
+                        report.gov_code = str(location['adminEntities']['1370']['id'])
+                        report.governorate = location['adminEntities']['1370']['name']
+                        report.district_code = str(location['adminEntities']['1521']['id'])
+                        report.district = location['adminEntities']['1521']['name']
+                        report.cadastral_code = str(location['adminEntities']['1522']['id'])
+                        report.cadastral = location['adminEntities']['1522']['name']
+
                     elif report.comments:
                         matches = re.search(r'(\d{5}-\d?\d-\d{3})', report.comments)
                         if matches:
