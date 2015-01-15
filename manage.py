@@ -154,61 +154,61 @@ def import_ai(ai_db, username='', password=''):
                 site['id'],
                 site['location']['name'].encode('UTF-8')
             )
-            reports = client.get_monthly_reports_for_site(site['id'])
-            for date, indicators in reports.items():
-                for indicator in indicators:
-                    report, created = Report.objects.get_or_create(
-                        date=date,
-                        site_id=site['id'],
-                        activity_id=activity['id'],
-                        partner_id=site['partner']['id'],
-                        indicator_id=indicator['indicatorId'],
-                    )
-                    report.value = indicator['value']
-                    report.category = activity['category']
-                    report.activity = activity['name']
-                    report.partner_name = site['partner']['name']
-                    report.location_name = site['location']['name']
-                    report.location_id = site['location']['id']
-                    report.location_x = site['location'].get('longitude', None)
-                    report.location_y = site['location'].get('latitude', None)
-                    report.indicator_name = indicator['indicatorName']
-                    report.comments = site.get('comments', None)
-
-                    location = ai.locations.find_one({'ai_id': report.location_id})
-                    if location:
-                        report.p_code = location['p_code']
-                        report.location_type = location['type']
-                        report.gov_code = str(location['adminEntities']['1370']['id'])
-                        report.governorate = location['adminEntities']['1370']['name']
-                        report.district_code = str(location['adminEntities']['1521']['id'])
-                        report.district = location['adminEntities']['1521']['name']
-                        report.cadastral_code = str(location['adminEntities']['1522']['id'])
-                        report.cadastral = location['adminEntities']['1522']['name']
-
-                    elif report.comments:
-                        matches = re.search(r'(\d{5}-\d?\d-\d{3})', report.comments)
-                        if matches:
-                            report.p_code = matches.group(1)
-
-                    if created:
-                        for a in attributes:
-                            report.attributes.append(
-                                Attribute(
-                                    name=a['name'],
-                                    value=a['attributes'][0]['name']
-                                )
-                            )
-
-                        print '        Created report: {} -> {} -> {} -> {} = {}'.format(
-                            report.date,
-                            report.location_name.encode('UTF-8'),
-                            report.partner_name.encode('UTF-8'),
-                            report.indicator_name.encode('UTF-8'),
-                            report.value
+            try:
+                reports = client.get_monthly_reports_for_site(site['id'])
+                for date, indicators in reports.items():
+                    for indicator in indicators:
+                        report, created = Report.objects.get_or_create(
+                            date=date,
+                            site_id=site['id'],
+                            activity_id=activity['id'],
+                            partner_id=site['partner']['id'],
+                            indicator_id=indicator['indicatorId'],
                         )
+                        report.value = indicator['value']
+                        report.category = activity['category']
+                        report.activity = activity['name']
+                        report.partner_name = site['partner']['name']
+                        report.location_name = site['location']['name']
+                        report.location_id = site['location']['id']
+                        report.location_x = site['location'].get('longitude', None)
+                        report.location_y = site['location'].get('latitude', None)
+                        report.indicator_name = indicator['indicatorName']
+                        report.comments = site.get('comments', None)
 
-                    report.save()
+                        location = ai.locations.find_one({'ai_id': report.location_id})
+                        if location:
+                            report.p_code = location['p_code']
+                            report.location_type = location['type']
+                            report.gov_code = str(location['adminEntities']['1370']['id'])
+                            report.governorate = location['adminEntities']['1370']['name']
+                            report.district_code = str(location['adminEntities']['1521']['id'])
+                            report.district = location['adminEntities']['1521']['name']
+                            report.cadastral_code = str(location['adminEntities']['1522']['id'])
+                            report.cadastral = location['adminEntities']['1522']['name']
+
+                        elif report.comments:
+                            matches = re.search(r'(\d{5}-\d?\d-\d{3})', report.comments)
+                            if matches:
+                                report.p_code = matches.group(1)
+
+                        if created:
+                            for a in attributes:
+                                report.attributes.append(
+                                    Attribute(
+                                        name=a['name'],
+                                        value=a['attributes'][0]['name']
+                                    )
+                                )
+
+                            report.save()
+                            
+            except Exception as exp:
+                requests.post(
+                    'https://hooks.slack.com/services/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',
+                    data=json.dumps({'text': 'AI import error, {}'.format(exp)})
+                )
+                continue
 
     requests.post(
         'https://hooks.slack.com/services/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',
