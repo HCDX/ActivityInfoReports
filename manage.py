@@ -20,7 +20,7 @@ from pymongo import MongoClient
 from activtyinfo_client import ActivityInfoClient
 from cartodb import CartoDBAPIKey, CartoDBException
 
-from aggregator import app, Report, Attribute, db, sentry
+from aggregator import app, Report, Attribute, db
 
 manager = Manager(app)
 
@@ -202,7 +202,8 @@ def import_ai(ai_db, username='', password=''):
                                 )
 
                             report.save()
-                            
+                            reports_created += 1
+
             except Exception as exp:
                 requests.post(
                     'https://hooks.slack.com/services/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',

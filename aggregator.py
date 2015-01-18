@@ -14,6 +14,9 @@ from flask.ext import admin
 from flask.ext.mongoengine import MongoEngine
 from flask.ext.admin.contrib.mongoengine import ModelView
 from flask.ext.admin import expose
+from flask.ext.admin.babel import gettext
+from flask.ext.admin.contrib.mongoengine.filters import BaseMongoEngineFilter
+
 from flask.ext.mongorest import MongoRest
 from flask.ext.mongorest.views import ResourceView
 from flask.ext.mongorest.resources import Resource
@@ -34,7 +37,6 @@ app.config['MONGODB_SETTINGS'] = {
     'host': os.environ.get('MONGODB_HOST', None),
     'port': int(os.environ.get('MONGODB_PORT', 27017)),
 }
-sentry = Sentry(app, logging=True, level=logging.ERROR)
 
 # Create models
 db = MongoEngine()
@@ -78,6 +80,19 @@ class Report(db.Document):
     )
 
 
+class FilterByAttribute(BaseMongoEngineFilter):
+
+    def apply(self, query, value):
+        flt = {
+            '__raw__':
+                {'attributes':
+                    {'$elemMatch': {self.column: value}}}}
+        return query.filter(**flt)
+
+    def operation(self):
+        return gettext('value')
+
+
 # Customized admin views
 class ReportView(ModelView):
     can_create = False
@@ -94,6 +109,36 @@ class ReportView(ModelView):
         'location_name',
         'indicator_name',
         'comments',
+        FilterByAttribute(
+            'value',
+            'RRP6 result',
+            options=(
+                ('Yes', u'Yes'),
+                ('No', u'No'),
+            ),
+        ),
+        FilterByAttribute(
+            'value',
+            'Funded by',
+            options=(
+                ('UNICEF', u'UNICEF'),
+                ('UNHCR', u'UNHCR'),
+                ('UNRWA', u'UNRWA'),
+                ('UNHCR', u'UNHCR'),
+                ('Independent', u'Independent'),
+            ),
+        ),
+        FilterByAttribute(
+            'value',
+            'Location type',
+            options=(
+                ('Palestinian Camp', u'Palestinian Camp'),
+                ('School', u'School'),
+                ('ITS', u'ITS'),
+                ('Other', u'Other'),
+                ('Distribution Site', u'Distribution Site'),
+            ),
+        ),
     ]
     column_list = [
         'date',
@@ -107,7 +152,16 @@ class ReportView(ModelView):
         'comments',
     ]
 
-    column_searchable_list = column_filters
+    column_searchable_list = [
+        'date',
+        'p_code',
+        'category',
+        'activity',
+        'partner_name',
+        'location_name',
+        'indicator_name',
+        'comments',
+    ]
 
     form_subdocuments = {
         'attributes': {
@@ -123,7 +177,9 @@ class ReportView(ModelView):
     @expose('/export')
     def export(self):
         # Grab parameters from URL
-        page, sort_idx, sort_desc, search, filters = self._get_list_extra_args()
+        args = self._get_list_extra_args()
+        page, sort_idx, sort_desc, search, filters = \
+            args.page, args.sort, args.sort_desc, args.search, args.filters
         sort_column = self._get_column_by_idx(sort_idx)
         if sort_column is not None:
             sort_column = sort_column[0]
