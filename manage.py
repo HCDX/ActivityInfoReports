@@ -161,13 +161,13 @@ def update_ai_locations(type_id, username='', password=''):
     print updated_location
 
 @manager.command
-def import_ai(username='', password=''):
+def import_ai(dbs, username='', password=''):
     """
     Imports data from Activity Info
     """
 
     reports_created = 0
-    db_ids = os.environ.get('AI_DB_IDS').split()
+    db_ids = dbs.split(',')
     client = ActivityInfoClient(username, password)
 
     for db_id in db_ids:
