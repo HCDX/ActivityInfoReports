@@ -228,18 +228,18 @@ def import_ai(ai_db, username='', password=''):
                         if location:
                             if 'code' in location:
                                 report.p_code = location['code']
-                                try:
-                                    report.gov_code = str(location['adminEntities']['1370']['id'])
-                                    report.governorate = location['adminEntities']['1370']['name']
-                                    report.district_code = str(location['adminEntities']['1521']['id'])
-                                    report.district = location['adminEntities']['1521']['name']
-                                    report.cadastral_code = str(location['adminEntities']['1522']['id'])
-                                    report.cadastral = location['adminEntities']['1522']['name']
-                                except Exception as exp:
-                                    requests.post(
-                                        'https://hooks.slack.com/services/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',
-                                        data=json.dumps({'text': 'AI import error, location {}'.format(exp)})
-                                    )
+                            try:
+                                report.gov_code = str(location['adminEntities']['1370']['id'])
+                                report.governorate = location['adminEntities']['1370']['name']
+                                report.district_code = str(location['adminEntities']['1521']['id'])
+                                report.district = location['adminEntities']['1521']['name']
+                                report.cadastral_code = str(location['adminEntities']['1522']['id'])
+                                report.cadastral = location['adminEntities']['1522']['name']
+                            except Exception as exp:
+                                requests.post(
+                                    'https://hooks.slack.com/services/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',
+                                    data=json.dumps({'text': 'AI import error, location {}'.format(exp)})
+                                )
 
                         elif report.comments:
                             matches = re.search(r'(\d{5}-\d?\d-\d{3})', report.comments)

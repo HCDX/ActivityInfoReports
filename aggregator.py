@@ -82,12 +82,11 @@ class Report(db.Document):
 
 
 class FilterByAttribute(BaseMongoEngineFilter):
-
     def apply(self, query, value):
         flt = {
             '__raw__':
                 {'attributes':
-                    {'$elemMatch': {self.column: value}}}}
+                     {'$elemMatch': {self.column: value}}}}
         return query.filter(**flt)
 
     def operation(self):
@@ -200,8 +199,13 @@ class ReportView(ModelView):
 
         dicts = []
         for report in data:
-            dicts.append(report.to_mongo().to_dict())
-        df = DataFrame.from_records(dicts, columns=self.column_list)
+            dict = report.to_mongo().to_dict()
+            del dict['_id']
+            del dict['attributes']
+            for attr in report.attributes:
+                dict[attr.name] = attr.value
+            dicts.append(dict)
+        df = DataFrame.from_records(dicts)
 
         buffer = StringIO.StringIO()  # use stringio for temp file
         df.to_csv(buffer, encoding='utf-8')
@@ -231,7 +235,6 @@ class AttributeResource(Resource):
 
 
 class NeNone(ops.Ne):
-
     def apply(self, queryset, field, value, negate=False):
         # convert nulls to python None
         if value == u'null':
@@ -261,6 +264,7 @@ class ReportsView(ResourceView):
     resource = ReportResource
     methods = [methods.List]
 
+
 # Flask views
 @app.route('/')
 def index():
@@ -268,6 +272,5 @@ def index():
 
 
 if __name__ == '__main__':
-
     # Start app
     app.run(debug=True)

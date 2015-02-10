@@ -1,1 +1,1 @@
-web: gunicorn aggregator:app --workers $WEB_CONCURRENCY --log-file -
+web: gunicorn aggregator:app --workers $WEB_CONCURRENCY --timeout=1200 --log-file -
