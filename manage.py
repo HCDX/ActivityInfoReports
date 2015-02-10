@@ -30,57 +30,98 @@ ai = MongoClient(
 
 
 @manager.command
+def update_levels(country_code='LB'):
+    """
+    Updates local admin level lookup tables from AI.
+    These lookup tables are used when creating sites for AI.
+    """
+
+    client = ActivityInfoClient()
+
+    for level in client.get_admin_levels(country_code):
+        entities = client.get_entities(level['id'])
+        for entity in entities:
+            ai[level['name']].update(
+                {'_id': entity['id']}, entity, upsert=True)
+            print 'Updated entity {}: {}'.format(
+                level['name'], entity['name'].encode('UTF-8')
+            )
+
+    for site_type in client.get_location_types(country_code):
+        locations = client.get_locations(site_type['id'])
+        for location in locations:
+            ai.locations.update(
+                {'_id': location['id']}, location, upsert=True)
+            print 'Updated {}: {}'.format(
+                site_type['name'], location['name'].encode('UTF-8')
+            )
+
+
+@manager.command
 def update_sites(
-        api_key='cad5c2fd1aa5236083743f54264b203d903f3a06',
-        domain='unhcr',
-        table_name='imap_v5_cadcode',
-        site_type='IS',
-        name_col='pcodename',
-        code_col='p_code',
-    ):
+    api_key='cad5c2fd1aa5236083743f54264b203d903f3a06',
+    domain='unhcr',
+    username='jcranwellward@unicef.org',
+    password='Inn0vation',
+    list_name='ai_localities',
+    site_type='LOC',
+    name_col='location_name_en',
+    code_col='pcode',
+    target_list='51048'
+):
 
-    client = CartoDBAPIKey(api_key, domain)
+    carto_client = CartoDBAPIKey(api_key, domain)
 
-    sites = client.sql(
-        'select * from {}'.format(table_name)
+    ai_client = ActivityInfoClient(username, password)
+
+    # create an index of sites by p_code
+    existing = dict(
+        (site['code'], dict(site, index=i))
+        for (i, site) in enumerate(
+            ai_client.get_locations(target_list)
+        )
     )
 
+    sites = carto_client.sql(
+        'select * from {}'.format(list_name)
+    )
+
+    bad_codes = []
+    updated_sites = 0
     for row in sites['rows']:
         p_code = row[code_col]
         site_name = row[name_col].encode('UTF-8')
-        cad = ai['Cadastral Area'].find_one({'code': row['cad_code']})
+        cad = ai['Cadastral Area'].find_one({'code': str(row['cad_code'])})
+        if cad is None:
+            bad_codes.append(row['cad_code'])
+            continue
         caz = ai['Caza'].find_one({'id': cad['parentId']})
         gov = ai['Governorate'].find_one({'id': caz['parentId']})
 
-        location = ai.locations.find_one({'p_code': p_code})
-        if not location:
-            location = {
-                "p_code": p_code,
-                "ai_id": int(random.getrandbits(31))  # (31-bit random key),
-            }
+        if p_code not in existing:
 
-        location["ai_name"] = '{}: {}'.format(site_type, site_name)
-        location["name"] = site_name
-        location["type"] = site_type
-        location["latitude"] = row['latitude']
-        location["longitude"] = row['longitude']
-        location["adminEntities"] = {
-            str(gov['levelId']): {
-                "id": gov['id'],
-                "name": gov['name']
-            },
-            str(caz['levelId']): {
-                "id": caz['id'],
-                "name": caz['name']
-            },
-            str(cad['levelId']): {
-                "id": cad['id'],
-                "name": cad['name']
-            },
-        }
+            payload = dict(
+                id=int(random.getrandbits(31)),
+                locationTypeId=target_list,
+                name='{}: {}'.format(site_type, site_name),
+                axe='{}'.format(p_code),
+                latitude=row['latitude'],
+                longitude=row['longitude'],
+                workflowstatusid='validated'
+            )
+            payload['E{}'.format(gov['levelId'])] = gov['id']
+            payload['E{}'.format(caz['levelId'])] = caz['id']
+            payload['E{}'.format(cad['levelId'])] = cad['id']
 
-        ai.locations.update({'p_code': p_code}, location, upsert=True)
-        print 'Updated {}: {}'.format(site_type, site_name)
+            response = ai_client.call_command('CreateLocation', **payload)
+            if response.status_code == requests.codes.ok:
+                updated_sites += 1
+                print 'Updated {}: {}'.format(site_type, site_name)
+            else:
+                print 'Error for {}: {}'.format(site_type, site_name)
+
+    print 'Bad codes: {}'.format(bad_codes)
+    print 'Updated sites: {}'.format(updated_sites)
 
 
 @manager.command
@@ -88,13 +129,14 @@ def update_ai_locations(type_id, username='', password=''):
 
     client = ActivityInfoClient(username, password)
 
-    for location in ai.locations.find():
+    updated_location = 0
+    for location in ai.locations.find({'ai_name': {'$regex': 'PG'}}):
 
         payload = {
-            'id': location['ai_id'],
+            'id': int(random.getrandbits(31)),
             'locationTypeId': type_id,
             'name': location['ai_name'],
-            'axe': '{}: {}'.format('PCode', location['p_code']),
+            'axe': '{}'.format(location['p_code']),
             'latitude': location['latitude'],
             'longitude': location['longitude'],
             'workflowstatusid': 'validated'
@@ -103,8 +145,13 @@ def update_ai_locations(type_id, username='', password=''):
             payload['E{}'.format(id)] = level['id']
 
         response = client.call_command('CreateLocation', **payload)
-        print response
+        if response.status_code == requests.codes.ok:
+            updated_location += 1
+            print 'Uploaded {}'.format(location['ai_name'].encode('UTF-8'))
+        else:
+            print 'Error for: {}'.format(location['ai_name'].encode('UTF-8'))
 
+    print updated_location
 
 @manager.command
 def import_ai(ai_db, username='', password=''):
@@ -159,6 +206,7 @@ def import_ai(ai_db, username='', password=''):
                 for date, indicators in reports.items():
                     for indicator in indicators:
                         report, created = Report.objects.get_or_create(
+                            db_name=db_info['name'],
                             date=date,
                             site_id=site['id'],
                             activity_id=activity['id'],
@@ -176,10 +224,10 @@ def import_ai(ai_db, username='', password=''):
                         report.indicator_name = indicator['indicatorName']
                         report.comments = site.get('comments', None)
 
-                        location = ai.locations.find_one({'ai_id': report.location_id})
+                        location = ai.locations.find_one({'_id': report.location_id})
                         if location:
-                            report.p_code = location['p_code']
-                            report.location_type = location['type']
+                            if 'code' in location:
+                                report.p_code = location['code']
                             report.gov_code = str(location['adminEntities']['1370']['id'])
                             report.governorate = location['adminEntities']['1370']['name']
                             report.district_code = str(location['adminEntities']['1521']['id'])

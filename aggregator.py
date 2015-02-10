@@ -50,6 +50,7 @@ class Attribute(db.EmbeddedDocument):
 
 
 class Report(db.Document):
+    db_name = db.StringField()
     date = db.StringField()
     site_id = db.IntField()
     p_code = db.StringField()
@@ -101,6 +102,7 @@ class ReportView(ModelView):
     list_template = 'list.html'
 
     column_filters = [
+        'db_name',
         'date',
         'p_code',
         'category',
@@ -141,6 +143,7 @@ class ReportView(ModelView):
         ),
     ]
     column_list = [
+        'db_name',
         'date',
         'category',
         'activity',
@@ -153,6 +156,7 @@ class ReportView(ModelView):
     ]
 
     column_searchable_list = [
+        'db_name',
         'date',
         'p_code',
         'category',
