@@ -188,7 +188,7 @@ def import_ai(dbs, username='', password=''):
             ai.attributeGroups.update({'_id': attrib['id']}, attrib, upsert=True)
 
         for activity in ai.databases.find_one({'_id': db_id})['activities']:
-            print u'Pulling sites for activity: {} - {}'.format(activity['id'], activity['name'])
+            print u'Pulling sites for activity: {} - {}'.format(activity['id'], activity['name']).encode('UTF-8')
             sites = client.get_sites(activity=activity['id'], include_monthly_reports=False)
             for site in sites:
                 attributes = []
