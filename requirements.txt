@@ -12,3 +12,4 @@ cleancat
 mimerender
 raven[flask]
 requests
+flask-cors

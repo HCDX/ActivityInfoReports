@@ -6,6 +6,8 @@ import logging
 from pandas import DataFrame
 from raven.contrib.flask import Sentry
 
+from flask_cors import CORS
+
 from flask import Flask
 from flask import redirect
 from flask import request
@@ -26,6 +28,8 @@ from flask.ext.mongorest import methods
 
 # Create application
 app = Flask(__name__)
+cors = CORS(app)
+
 app.config['DEBUG'] = True
 
 # Create dummy secrey key so we can use sessions

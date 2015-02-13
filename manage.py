@@ -70,11 +70,11 @@ def update_sites(
     domain='unhcr',
     username='jcranwellward@unicef.org',
     password='Inn0vation',
-    list_name='ai_localities',
-    site_type='LOC',
-    name_col='location_name_en',
-    code_col='pcode',
-    target_list='51048'
+    list_name='ai_schools',
+    site_type='SCH',
+    name_col='school_name',
+    code_col='cerd',
+    target_list='51078'
 ):
 
     carto_client = CartoDBAPIKey(api_key, domain)
@@ -110,7 +110,7 @@ def update_sites(
             payload = dict(
                 id=int(random.getrandbits(31)),
                 locationTypeId=target_list,
-                name='{}: {}'.format(site_type, site_name),
+                name='{}: {}'.format(site_type, site_name)[0:40],
                 axe='{}'.format(p_code),
                 latitude=row['latitude'],
                 longitude=row['longitude'],
@@ -123,9 +123,9 @@ def update_sites(
             response = ai_client.call_command('CreateLocation', **payload)
             if response.status_code == requests.codes.ok:
                 updated_sites += 1
-                print 'Updated {}: {}'.format(site_type, site_name)
+                print 'Updated {}'.format(payload['name'])
             else:
-                print 'Error for {}: {}'.format(site_type, site_name)
+                print 'Error for {}'.format(payload['name'])
 
     print 'Bad codes: {}'.format(bad_codes)
     print 'Updated sites: {}'.format(updated_sites)
