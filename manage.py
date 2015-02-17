@@ -70,10 +70,10 @@ def update_sites(
     domain='unhcr',
     username='jcranwellward@unicef.org',
     password='Inn0vation',
-    list_name='ai_schools',
-    site_type='SCH',
-    name_col='school_name',
-    code_col='cerd',
+    list_name='ai_technical_schools',
+    site_type='TECH',
+    name_col='insitute_e',
+    code_col='p_code',
     target_list='51078'
 ):
 
@@ -206,55 +206,50 @@ def import_ai(dbs, username='', password=''):
                     reports = client.get_monthly_reports_for_site(site['id'])
                     for date, indicators in reports.items():
                         for indicator in indicators:
-                            report, created = Report.objects.get_or_create(
-                                db_name=db_info['name'],
-                                date=date,
-                                site_id=site['id'],
-                                activity_id=activity['id'],
-                                partner_id=site['partner']['id'],
-                                indicator_id=indicator['indicatorId'],
-                            )
-                            report.value = indicator['value']
-                            report.category = activity['category']
-                            report.activity = activity['name']
-                            report.partner_name = site['partner']['name']
-                            report.location_name = site['location']['name']
-                            report.location_id = site['location']['id']
-                            report.location_x = site['location'].get('longitude', None)
-                            report.location_y = site['location'].get('latitude', None)
-                            report.indicator_name = indicator['indicatorName']
-                            report.comments = site.get('comments', None)
+                            if indicator['value']:
+                                report, created = Report.objects.get_or_create(
+                                    db_name=db_info['name'],
+                                    date=date,
+                                    site_id=site['id'],
+                                    activity_id=activity['id'],
+                                    partner_id=site['partner']['id'],
+                                    indicator_id=indicator['indicatorId'],
+                                )
+                                report.value = indicator['value']
+                                report.category = activity['category']
+                                report.activity = activity['name']
+                                report.partner_name = site['partner']['name']
+                                report.p_code = site['location']['code']
+                                report.location_name = site['location']['name']
+                                report.location_id = site['location']['id']
+                                report.location_x = site['location'].get('longitude', None)
+                                report.location_y = site['location'].get('latitude', None)
+                                report.indicator_name = indicator['indicatorName']
+                                report.comments = site.get('comments', None)
 
-                            location = ai.locations.find_one({'_id': report.location_id})
-                            if location:
-                                if 'code' in location:
-                                    report.p_code = location['code']
-                                try:
-                                    report.gov_code = str(location['adminEntities']['1370']['id'])
-                                    report.governorate = location['adminEntities']['1370']['name']
-                                    report.district_code = str(location['adminEntities']['1521']['id'])
-                                    report.district = location['adminEntities']['1521']['name']
-                                    report.cadastral_code = str(location['adminEntities']['1522']['id'])
-                                    report.cadastral = location['adminEntities']['1522']['name']
-                                except Exception as exp:
-                                    send_message('AI import error, location {}'.format(exp))
+                                location = ai.locations.find_one({'_id': report.location_id})
+                                if location:
+                                    try:
+                                        report.gov_code = str(location['adminEntities']['1370']['id'])
+                                        report.governorate = location['adminEntities']['1370']['name']
+                                        report.district_code = str(location['adminEntities']['1521']['id'])
+                                        report.district = location['adminEntities']['1521']['name']
+                                        report.cadastral_code = str(location['adminEntities']['1522']['id'])
+                                        report.cadastral = location['adminEntities']['1522']['name']
+                                    except Exception as exp:
+                                        send_message('AI import error, location {}'.format(exp))
 
-                            elif report.comments:
-                                matches = re.search(r'(\d{5}-\d?\d-\d{3})', report.comments)
-                                if matches:
-                                    report.p_code = matches.group(1)
-
-                            if created:
-                                for a in attributes:
-                                    report.attributes.append(
-                                        Attribute(
-                                            name=a['name'],
-                                            value=a['attributes'][0]['name']
+                                if created:
+                                    for a in attributes:
+                                        report.attributes.append(
+                                            Attribute(
+                                                name=a['name'],
+                                                value=a['attributes'][0]['name']
+                                            )
                                         )
-                                    )
 
-                                report.save()
-                                reports_created += 1
+                                    report.save()
+                                    reports_created += 1
 
                 except Exception as exp:
                     send_message('AI import error, {}'.format(exp))
