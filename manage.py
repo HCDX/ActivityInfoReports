@@ -20,7 +20,7 @@ from pymongo import MongoClient
 from activtyinfo_client import ActivityInfoClient
 from cartodb import CartoDBAPIKey, CartoDBException
 
-from aggregator import app, Report, Attribute, db
+from aggregator import app, Report, Attribute
 
 manager = Manager(app)
 
@@ -66,17 +66,16 @@ def update_levels(country_code='LB'):
 
 @manager.command
 def update_sites(
-    api_key='cad5c2fd1aa5236083743f54264b203d903f3a06',
-    domain='unhcr',
-    username='jcranwellward@unicef.org',
-    password='Inn0vation',
-    list_name='ai_technical_schools',
-    site_type='TECH',
-    name_col='insitute_e',
-    code_col='p_code',
-    target_list='51078'
+        api_key='cad5c2fd1aa5236083743f54264b203d903f3a06',
+        domain='unhcr',
+        username='jcranwellward@unicef.org',
+        password='Inn0vation',
+        list_name='ai_palestinian_camps_in_lebanon',
+        site_type='PC',
+        name_col='camp',
+        code_col='pcode',
+        target_list='51078'
 ):
-
     carto_client = CartoDBAPIKey(api_key, domain)
 
     ai_client = ActivityInfoClient(username, password)
@@ -133,7 +132,6 @@ def update_sites(
 
 @manager.command
 def update_ai_locations(type_id, username='', password=''):
-
     client = ActivityInfoClient(username, password)
 
     updated_location = 0
@@ -160,6 +158,7 @@ def update_ai_locations(type_id, username='', password=''):
 
     print updated_location
 
+
 @manager.command
 def import_ai(dbs, username='', password=''):
     """
@@ -171,12 +170,12 @@ def import_ai(dbs, username='', password=''):
     client = ActivityInfoClient(username, password)
 
     for db_id in db_ids:
-        # store the whole database for future reference
-        print u'Pulling database...'
         db_info = client.get_database(db_id)
         send_message('AI import started for database: {}'.format(db_info['name']))
 
+        # store the whole database for future reference
         ai.databases.update({'_id': db_id}, db_info, upsert=True)
+
         # split out all the attribute groups into a separate collection
         attribs = ai.databases.aggregate([
             {'$project': {'groups': '$activities.attributeGroups'}},
@@ -187,75 +186,95 @@ def import_ai(dbs, username='', password=''):
         for attrib in attribs['result'][0]['groups']:
             ai.attributeGroups.update({'_id': attrib['id']}, attrib, upsert=True)
 
-        for activity in ai.databases.find_one({'_id': db_id})['activities']:
-            print u'Pulling sites for activity: {} - {}'.format(activity['id'], activity['name']).encode('UTF-8')
-            sites = client.get_sites(activity=activity['id'], include_monthly_reports=False)
-            for site in sites:
-                attributes = []
-                if 'attributes' in site:
-                    attributes = [attr for attr in ai.attributeGroups.find(
-                        {'attributes.id': {'$in': site['attributes']}},
-                        {'name': 1, 'mandatory': 1, "attributes.$": 1}
-                    )]
+        # create an index of sites by id
+        sites = dict(
+            (site['id'], dict(site, index=i))
+            for (i, site) in enumerate(
+                client.get_sites(database=db_id)
+            )
+        )
 
-                print '     Pulling reports for site: {} - {}'.format(
-                    site['id'],
-                    site['location']['name'].encode('UTF-8')
+        # create an index of activities by id
+        activities = dict(
+            (activity['id'], dict(activity, index=i))
+            for (i, activity) in enumerate(
+                ai.databases.aggregate([
+                    {'$match': {'_id': db_id}},
+                    {'$unwind': '$activities'},
+                    {'$project': {
+                        '_id': 0,
+                        'id': '$activities.id',
+                        'name': '$activities.name',
+                        'category': '$activities.category',
+                        'location': '$activities.locationType'
+                    }},
+                ])['result']
+            )
+        )
+
+        # get all reports for these activities
+        forms = client.get_cube(activities.keys())
+
+        for indicator in forms:
+
+            site = sites[indicator['key']['Site']['id']]
+            attributes = [
+                attr for attr in ai.attributeGroups.find(
+                    {'attributes.id': {'$in': site['attributes']}},
+                    {'name': 1, 'mandatory': 1, "attributes.$": 1}
                 )
-                try:
-                    reports = client.get_monthly_reports_for_site(site['id'])
-                    for date, indicators in reports.items():
-                        for indicator in indicators:
-                            if indicator['value']:
-                                report, created = Report.objects.get_or_create(
-                                    db_name=db_info['name'],
-                                    date=date,
-                                    site_id=site['id'],
-                                    activity_id=activity['id'],
-                                    partner_id=site['partner']['id'],
-                                    indicator_id=indicator['indicatorId'],
-                                )
-                                report.value = indicator['value']
-                                report.category = activity['category']
-                                report.activity = activity['name']
-                                report.partner_name = site['partner']['name']
-                                report.p_code = site['location']['code']
-                                report.location_name = site['location']['name']
-                                report.location_id = site['location']['id']
-                                report.location_x = site['location'].get('longitude', None)
-                                report.location_y = site['location'].get('latitude', None)
-                                report.indicator_name = indicator['indicatorName']
-                                report.comments = site.get('comments', None)
+            ]
+            if indicator['sum']:
+                report, created = Report.objects.get_or_create(
+                    db_name=db_info['name'],
+                    date='{}-{}'.format(
+                        indicator['key']['Date']['year'],
+                        indicator['key']['Date']['month'],
+                    ),
+                    site_id=site['id'],
+                    activity_id=site['activity'],
+                    partner_id=site['partner']['id'],
+                    indicator_id=indicator['key']['Indicator']['id'],
+                )
+                activity = activities[report.activity_id]
+                report.value = indicator['sum']
+                report.category = activity['category']
+                report.activity = activity['name']
+                report.partner_name = site['partner']['name']
+                report.p_code = site['location']['code']
+                report.location_name = site['location']['name']
+                report.location_id = site['location']['id']
+                report.location_x = site['location'].get('longitude', None)
+                report.location_y = site['location'].get('latitude', None)
+                report.indicator_name = indicator['key']['Indicator']['label']
+                report.comments = site.get('comments', None)
 
-                                location = ai.locations.find_one({'_id': report.location_id})
-                                if location:
-                                    try:
-                                        report.gov_code = str(location['adminEntities']['1370']['id'])
-                                        report.governorate = location['adminEntities']['1370']['name']
-                                        report.district_code = str(location['adminEntities']['1521']['id'])
-                                        report.district = location['adminEntities']['1521']['name']
-                                        report.cadastral_code = str(location['adminEntities']['1522']['id'])
-                                        report.cadastral = location['adminEntities']['1522']['name']
-                                    except Exception as exp:
-                                        send_message('AI import error, location {}'.format(exp))
+                location = ai.locations.find_one({'_id': report.location_id})
+                if location and location['adminEntities'] is not None:
+                    try:
+                        report.gov_code = str(location['adminEntities']['1370']['id'])
+                        report.governorate = location['adminEntities']['1370']['name']
+                        report.district_code = str(location['adminEntities']['1521']['id'])
+                        report.district = location['adminEntities']['1521']['name']
+                        report.cadastral_code = str(location['adminEntities']['1522']['id'])
+                        report.cadastral = location['adminEntities']['1522']['name']
+                    except Exception as exp:
+                        send_message('AI import error, location {}'.format(exp))
 
-                                if created:
-                                    for a in attributes:
-                                        report.attributes.append(
-                                            Attribute(
-                                                name=a['name'],
-                                                value=a['attributes'][0]['name']
-                                            )
-                                        )
+                if created:
+                    for a in attributes:
+                        report.attributes.append(
+                            Attribute(
+                                name=a['name'],
+                                value=a['attributes'][0]['name']
+                            )
+                        )
 
-                                    report.save()
-                                    reports_created += 1
+                    report.save()
+                    reports_created += 1
 
-                except Exception as exp:
-                    send_message('AI import error, {}'.format(exp))
-                    continue
-
-        send_message('AI import finished, {} site reports created'.format(reports_created))
+    send_message('AI import finished, {} site reports created'.format(reports_created))
+    return reports_created
 
 
 # Turn on debugger by default and reloader
@@ -264,7 +283,6 @@ manager.add_command("runserver", Server(
     use_reloader=True,
     host='0.0.0.0')
 )
-
 
 if __name__ == "__main__":
     manager.run()

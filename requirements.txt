@@ -2,6 +2,7 @@ Flask
 Flask-Views
 Flask-Script
 Flask-MongoEngine
+flask-login
 git+https://github.com/jamescw/flask-mongorest.git
 git+https://github.com/mrjoes/flask-admin.git
 git+https://github.com/UNICEFLebanonInnovation/ActvityInfoPython.git
@@ -13,3 +14,4 @@ mimerender
 raven[flask]
 requests
 flask-cors
+celery[mongodb]

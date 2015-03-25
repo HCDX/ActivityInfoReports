@@ -7,15 +7,15 @@ from pandas import DataFrame
 from raven.contrib.flask import Sentry
 
 from flask_cors import CORS
-
 from flask import Flask
 from flask import redirect
 from flask import request
 from flask import send_file
+from flask import url_for
 from flask.ext import admin
 from flask.ext.mongoengine import MongoEngine
 from flask.ext.admin.contrib.mongoengine import ModelView
-from flask.ext.admin import expose
+from flask.ext.admin import expose, helpers
 from flask.ext.admin.babel import gettext
 from flask.ext.admin.contrib.mongoengine.filters import BaseMongoEngineFilter
 
@@ -25,10 +25,17 @@ from flask.ext.mongorest.resources import Resource
 from flask.ext.mongorest import operators as ops
 from flask.ext.mongorest import methods
 
+import flask_login as login
+
+from celery import Celery
+from wtforms import form, fields, validators
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 # Create application
 app = Flask(__name__)
 cors = CORS(app)
+login_manager = login.LoginManager()
 
 app.config['DEBUG'] = True
 
@@ -41,10 +48,131 @@ app.config['MONGODB_SETTINGS'] = {
     'host': os.environ.get('MONGODB_HOST', None),
     'port': int(os.environ.get('MONGODB_PORT', 27017)),
 }
+app.config.update(
+    CELERY_BROKER_URL=os.environ.get('MONGO_URL', 'mongodb://localhost:27017/ai'),
+    CELERY_RESULT_BACKEND=os.environ.get('MONGO_URL', 'mongodb://localhost:27017/ai')
+)
 
 # Create models
 db = MongoEngine()
 db.init_app(app)
+login_manager.init_app(app)
+
+
+
+# Create user loader function
+@login_manager.user_loader
+def load_user(user_id):
+    return User.objects.get(id=user_id)
+
+
+# Create user model.
+class User(db.Document):
+    id = db.IntField()
+    first_name = db.StringField()
+    last_name = db.StringField()
+    username = db.StringField()
+    email = db.StringField()
+    password = db.StringField()
+    is_admin = db.BooleanField()
+
+    # Flask-Login integration
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return self.id
+
+    # Required for administrative interface
+    def __unicode__(self):
+        return self.username
+
+
+# Define login and registration forms (for flask-login)
+class LoginForm(form.Form):
+    username = fields.TextField(validators=[validators.required()])
+    password = fields.PasswordField(validators=[validators.required()])
+
+    def validate_login(self, field):
+        user = self.get_user()
+
+        if user is None:
+            raise validators.ValidationError('Invalid user')
+
+        # we're comparing the plaintext pw with the the hash from the db
+        if not check_password_hash(user.password, self.password.data):
+        # to compare plain text passwords use
+        # if user.password != self.password.data:
+            raise validators.ValidationError('Invalid password')
+
+    def get_user(self):
+        return User.objects.filter(username=self.username.data).first()
+
+
+class RegistrationForm(form.Form):
+    username = fields.TextField(validators=[validators.required()])
+    email = fields.TextField()
+    password = fields.PasswordField(validators=[validators.required()])
+
+    def validate_username(self, field):
+        if User.objects.filter(username=self.username.data).count() > 0:
+            raise validators.ValidationError('Duplicate username')
+
+
+# Create customized index view class that handles login & registration
+class MyAdminIndexView(admin.AdminIndexView):
+
+    @expose('/')
+    def index(self):
+        if not login.current_user.is_authenticated():
+            return redirect(url_for('.login_view'))
+        return super(MyAdminIndexView, self).index()
+
+    @expose('/login/', methods=('GET', 'POST'))
+    def login_view(self):
+        # handle user login
+        form = LoginForm(request.form)
+        if helpers.validate_form_on_submit(form):
+            user = form.get_user()
+            login.login_user(user)
+
+        if login.current_user.is_authenticated():
+            return redirect(url_for('.index'))
+        link = '<p>Don\'t have an account? <a href="' + url_for('.register_view') + '">Click here to register.</a></p>'
+        self._template_args['form'] = form
+        self._template_args['link'] = link
+        return super(MyAdminIndexView, self).index()
+
+    @expose('/register/', methods=('GET', 'POST'))
+    def register_view(self):
+        form = RegistrationForm(request.form)
+        if helpers.validate_form_on_submit(form):
+            user = User()
+
+            form.populate_obj(user)
+            # we hash the users password to avoid saving it as plaintext in the db,
+            # remove to use plain text:
+            user.password = generate_password_hash(form.password.data)
+
+            user.save()
+
+            login.login_user(user)
+            return redirect(url_for('.index'))
+        link = '<p>Already have an account? <a href="' + url_for('.login_view') + '">Click here to log in.</a></p>'
+        self._template_args['form'] = form
+        self._template_args['link'] = link
+        return super(MyAdminIndexView, self).index()
+
+    @expose('/logout/')
+    def logout_view(self):
+        login.logout_user()
+        return redirect(url_for('.index'))
 
 
 # Define mongoengine documents
@@ -223,9 +351,12 @@ class ReportView(ModelView):
             mimetype='text/csv'
         )
 
+    # def is_accessible(self):
+    #     return login.current_user.is_authenticated()
+
 
 # Create admin
-admin = admin.Admin(app, 'ActivityInfo Reports')
+admin = admin.Admin(app, 'ActivityInfo Reports', index_view=MyAdminIndexView(), base_template='my_master.html')
 
 # Add views
 admin.add_view(ReportView(Report))
@@ -255,6 +386,12 @@ class ReportResource(Resource):
     filters = {
         'p_code': [NeNone, ops.Exact],
         'partner_name': [ops.Exact, ops.Startswith],
+        'db_name': [ops.Exact, ops.Startswith],
+        'date': [ops.Exact, ops.Startswith],
+        'category': [ops.Exact, ops.Startswith],
+        'activity': [ops.Exact, ops.Startswith],
+        'location_name': [ops.Exact, ops.Startswith],
+        'indicator_name': [ops.Exact, ops.Startswith],
     }
 
     def get_objects(self, all=False, qs=None, qfilter=None):
