@@ -212,6 +212,19 @@ class Report(db.Document):
         db.EmbeddedDocumentField(Attribute)
     )
 
+    meta = {
+        'indexes': [
+            'db_name',
+            'p_code',
+            'category',
+            'activity',
+            'partner_name',
+            'location_name',
+            'indicator_category',
+            'indicator_name',
+        ]
+    }
+
 
 class FilterByAttribute(BaseMongoEngineFilter):
     def apply(self, query, value):
@@ -308,6 +321,13 @@ class ReportView(ModelView):
 
         }
     }
+
+    def get_query(self):
+        return self.model.objects.filter(date='{}-{}'.format(
+            datetime.date.today().year,
+            datetime.date.today().month
+        ))
+
 
     @expose('/export')
     def export(self):
