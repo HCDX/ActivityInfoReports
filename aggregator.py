@@ -244,6 +244,7 @@ class ReportView(ModelView):
     can_delete = False
     can_edit = False
     list_template = 'list.html'
+    page_size = 50
 
     column_filters = [
         'db_name',
@@ -321,13 +322,6 @@ class ReportView(ModelView):
 
         }
     }
-
-    def get_query(self):
-        return self.model.objects.filter(date='{}-{}'.format(
-            datetime.date.today().year,
-            datetime.date.today().month
-        ))
-
 
     @expose('/export')
     def export(self):
