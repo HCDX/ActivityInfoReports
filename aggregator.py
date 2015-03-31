@@ -56,8 +56,8 @@ app.config['MONGODB_SETTINGS'] = {
     'host': os.environ.get('MONGODB_URL', 'mongodb://localhost:27017/ai'),
 }
 app.config.update(
-    CELERY_BROKER_URL=os.environ.get('MONGODB_URL', 'mongodb://localhost:27017/ai'),
-    CELERY_RESULT_BACKEND=os.environ.get('MONGODB_URL', 'mongodb://localhost:27017/ai')
+    CELERY_BROKER_URL=os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
+    CELERY_RESULT_BACKEND=os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 )
 
 # Create models
