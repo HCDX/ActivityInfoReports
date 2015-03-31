@@ -106,7 +106,7 @@ class LoginForm(form.Form):
     username = fields.TextField(validators=[validators.required()])
     password = fields.PasswordField(validators=[validators.required()])
 
-    def validate_login(self, field):
+    def validate_username(self, field):
         user = self.get_user()
 
         if user is None:
@@ -410,8 +410,8 @@ class ReportView(ModelView):
             mimetype='text/csv'
         )
 
-    def is_accessible(self):
-        return login.current_user.is_authenticated()
+    # def is_accessible(self):
+    #     return login.current_user.is_authenticated()
 
 
 # Create admin
