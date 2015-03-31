@@ -42,10 +42,7 @@ app.config['DEBUG'] = True
 app.config['SECRET_KEY'] = '123456790'
 app.config['MONGODB_SETTINGS'] = {
     'db': 'ai-aggregator',
-    'username': 'ai-aggregator',
-    'password': os.environ.get('MONGODB_PASSWORD', None),
-    'host': 'mongodb',
-    'port': 27017,
+    'host': os.environ.get('MONGODB_URL', 'mongodb://localhost:27017/ai'),
 }
 app.config.update(
     CELERY_BROKER_URL=os.environ.get('MONGODB_URL', 'mongodb://localhost:27017/ai'),
@@ -175,6 +172,16 @@ class MyAdminIndexView(admin.AdminIndexView):
 
 
 # Define mongoengine documents
+class Locations(db.Document):
+    api_key = db.StringField()
+    domain = db.StringField()
+    list_name = db.StringField()
+    site_type = db.StringField()
+    name_col = db.StringField()
+    code_col = db.StringField()
+    target_list = db.StringField()
+
+
 class Attribute(db.EmbeddedDocument):
     name = db.StringField()
     value = db.StringField()
@@ -239,6 +246,15 @@ class FilterByAttribute(BaseMongoEngineFilter):
 
 
 # Customized admin views
+class AdminView(ModelView):
+
+    def is_accessible(self):
+        if login.current_user.is_authenticated():
+            if login.current_user.is_admin:
+                return True
+        return False
+
+
 class ReportView(ModelView):
     can_create = False
     can_delete = False
@@ -365,8 +381,8 @@ class ReportView(ModelView):
             mimetype='text/csv'
         )
 
-    # def is_accessible(self):
-    #     return login.current_user.is_authenticated()
+    def is_accessible(self):
+        return login.current_user.is_authenticated()
 
 
 # Create admin
@@ -374,6 +390,8 @@ admin = admin.Admin(app, 'ActivityInfo Reports', index_view=MyAdminIndexView(), 
 
 # Add views
 admin.add_view(ReportView(Report))
+admin.add_view(AdminView(User))
+admin.add_view(AdminView(Locations))
 
 # Add API
 api = MongoRest(app)
