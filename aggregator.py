@@ -41,15 +41,15 @@ app.config['DEBUG'] = True
 # Create dummy secrey key so we can use sessions
 app.config['SECRET_KEY'] = '123456790'
 app.config['MONGODB_SETTINGS'] = {
-    'db': os.environ.get('MONGODB_DATABASE', 'ai'),
-    'username': os.environ.get('MONGODB_USERNAME', None),
+    'db': 'ai-aggregator',
+    'username': 'ai-aggregator',
     'password': os.environ.get('MONGODB_PASSWORD', None),
-    'host': os.environ.get('MONGODB_HOST', None),
+    'host': 'mongodb',
     'port': 27017,
 }
 app.config.update(
-    CELERY_BROKER_URL=os.environ.get('MONGO_URL', 'mongodb://localhost:27017/ai'),
-    CELERY_RESULT_BACKEND=os.environ.get('MONGO_URL', 'mongodb://localhost:27017/ai')
+    CELERY_BROKER_URL=os.environ.get('MONGODB_URL', 'mongodb://localhost:27017/ai'),
+    CELERY_RESULT_BACKEND=os.environ.get('MONGODB_URL', 'mongodb://localhost:27017/ai')
 )
 
 # Create models
