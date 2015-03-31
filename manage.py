@@ -25,7 +25,7 @@ from aggregator import app, Report, Attribute
 manager = Manager(app)
 
 ai = MongoClient(
-    os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))[
+    os.environ.get('MONGODB_URL', 'mongodb://localhost:27017'))[
     os.environ.get('MONGODB_DATABASE', 'ai')]
 
 

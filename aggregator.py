@@ -48,8 +48,8 @@ app.config['MONGODB_SETTINGS'] = {
     'port': 27017,
 }
 app.config.update(
-    CELERY_BROKER_URL=str(os.environ.get('MONGODB_URL', 'mongodb://localhost:27017/ai')),
-    CELERY_RESULT_BACKEND=str(os.environ.get('MONGODB_URL', 'mongodb://localhost:27017/ai'))
+    CELERY_BROKER_URL=os.environ.get('MONGODB_URL', 'mongodb://localhost:27017/ai'),
+    CELERY_RESULT_BACKEND=os.environ.get('MONGODB_URL', 'mongodb://localhost:27017/ai')
 )
 
 # Create models
