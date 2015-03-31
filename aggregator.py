@@ -45,7 +45,7 @@ app.config['MONGODB_SETTINGS'] = {
     'username': os.environ.get('MONGODB_USERNAME', None),
     'password': os.environ.get('MONGODB_PASSWORD', None),
     'host': os.environ.get('MONGODB_HOST', None),
-    'port': int(os.environ.get('MONGODB_PORT', 27017)),
+    'port': int(str(os.environ.get('MONGODB_PORT', 27017))),
 }
 app.config.update(
     CELERY_BROKER_URL=os.environ.get('MONGO_URL', 'mongodb://localhost:27017/ai'),
