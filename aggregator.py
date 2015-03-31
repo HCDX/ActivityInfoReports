@@ -27,7 +27,6 @@ from flask.ext.mongorest import methods
 
 import flask_login as login
 
-from celery import Celery
 from wtforms import form, fields, validators
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -214,6 +213,7 @@ class Report(db.Document):
 
     meta = {
         'indexes': [
+            'date',
             'db_name',
             'p_code',
             'category',
