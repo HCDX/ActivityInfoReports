@@ -12,7 +12,7 @@ pandas
 cleancat
 mimerender
 raven[flask]
-requests
+requests==2.5.1
 flask-cors
 celery
 redis
