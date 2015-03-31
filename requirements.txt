@@ -14,5 +14,5 @@ mimerender
 raven[flask]
 requests
 flask-cors
-celery[mongodb]
-gdbm
+celery
+redis
