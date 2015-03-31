@@ -90,11 +90,11 @@ def update_sites(
     sites = carto_client.sql(
         'select * from {}'.format(list_name)
     )
-
+    send_message('Starting upload of {}'.format(list_name))
     bad_codes = []
     updated_sites = 0
     for row in sites['rows']:
-        p_code = row[code_col]
+        p_code = row[code_col].strip()
         site_name = row[name_col].encode('UTF-8')
         cad = ai['Cadastral Area'].find_one({'code': str(row['cad_code'])})
         if cad is None:
@@ -127,6 +127,7 @@ def update_sites(
 
     print 'Bad codes: {}'.format(bad_codes)
     print 'Updated sites: {}'.format(updated_sites)
+    send_message('Updated {} sites'.format(updated_sites))
 
 
 @manager.command

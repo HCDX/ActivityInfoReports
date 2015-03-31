@@ -14,8 +14,10 @@ from flask import send_file
 from flask import url_for
 from flask.ext import admin
 from flask.ext.mongoengine import MongoEngine
+from flask.ext.mongoengine.json import MongoEngineJSONEncoder
 from flask.ext.admin.contrib.mongoengine import ModelView
 from flask.ext.admin import expose, helpers
+from flask.ext.admin.actions import action
 from flask.ext.admin.babel import gettext
 from flask.ext.admin.contrib.mongoengine.filters import BaseMongoEngineFilter
 
@@ -27,8 +29,17 @@ from flask.ext.mongorest import methods
 
 import flask_login as login
 
+from bson import ObjectId
 from wtforms import form, fields, validators
 from werkzeug.security import generate_password_hash, check_password_hash
+
+
+class JSONEncoder(MongoEngineJSONEncoder):
+
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        return super(MongoEngineJSONEncoder, self).default(self, o)
 
 
 # Create application
@@ -53,7 +64,7 @@ app.config.update(
 db = MongoEngine()
 db.init_app(app)
 login_manager.init_app(app)
-
+app.json_encoder = JSONEncoder
 
 
 # Create user loader function
@@ -172,10 +183,10 @@ class MyAdminIndexView(admin.AdminIndexView):
 
 
 # Define mongoengine documents
-class Locations(db.Document):
+class CartoDbTable(db.Document):
     api_key = db.StringField()
     domain = db.StringField()
-    list_name = db.StringField()
+    table_name = db.StringField()
     site_type = db.StringField()
     name_col = db.StringField()
     code_col = db.StringField()
@@ -253,6 +264,24 @@ class AdminView(ModelView):
             if login.current_user.is_admin:
                 return True
         return False
+
+
+class CartoDBTableView(AdminView):
+
+    @action('update_ai', 'Update ActivityInfo')
+    def update_locations(self, ids):
+        from tasks import run_sites_update
+        for id in ids:
+            table = CartoDbTable.objects.get(id=id)
+            run_sites_update.delay(
+                table.api_key,
+                table.domain,
+                table.table_name,
+                table.site_type,
+                table.name_col,
+                table.code_col,
+                table.target_list
+            )
 
 
 class ReportView(ModelView):
@@ -391,7 +420,7 @@ admin = admin.Admin(app, 'ActivityInfo Reports', index_view=MyAdminIndexView(), 
 # Add views
 admin.add_view(ReportView(Report))
 admin.add_view(AdminView(User))
-admin.add_view(AdminView(Locations))
+admin.add_view(CartoDBTableView(CartoDbTable))
 
 # Add API
 api = MongoRest(app)

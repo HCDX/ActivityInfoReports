@@ -3,7 +3,7 @@ __author__ = 'jcranwellward'
 from celery import Celery
 from celery.schedules import crontab
 
-from manage import app, import_ai
+from manage import app, import_ai, update_sites
 
 
 CELERYBEAT_SCHEDULE = {
@@ -36,3 +36,22 @@ celery = make_celery(app)
 def run_import():
     import_ai('1800,1883,1884,1885,1886,1887,1888,1889,1890',
               username='jcranwellward@unicef.org', password='Inn0vation')
+
+
+@celery.task
+def run_sites_update(
+        api_key,
+        domain,
+        table_name,
+        site_type,
+        name_col,
+        code_col,
+        target_list):
+
+    update_sites(api_key=api_key,
+                 domain=domain,
+                 list_name=table_name,
+                 site_type=site_type,
+                 name_col=name_col,
+                 code_col=code_col,
+                 target_list=target_list)
