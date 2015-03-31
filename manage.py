@@ -59,7 +59,7 @@ def update_levels(country_code='LB'):
             ai.locations.update(
                 {'_id': location['id']}, location, upsert=True)
             print 'Updated {}: {}'.format(
-                site_type['name'], location['name'].encode('UTF-8')
+                site_type['name'].encode('UTF-8'), location['name'].encode('UTF-8')
             )
 
 
