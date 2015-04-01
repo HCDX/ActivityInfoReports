@@ -186,7 +186,7 @@ def import_ai(dbs, username='', password=''):
             {'$group': {'_id': "$_id", 'groups': {'$push': '$groups'}}},
         ])
         for attrib in attribs['result'][0]['groups']:
-            attrib['_id'] = attrib['_id']
+            attrib['_id'] = attrib['id']
             ai.attributeGroups.update({'_id': attrib['id']}, attrib, upsert=True)
 
         # 'create an index of sites by id'
