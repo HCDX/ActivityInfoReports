@@ -269,9 +269,9 @@ def import_ai(dbs, username='', password=''):
                                 value=a['attributes'][0]['name']
                             )
                         )
+                    reports_created += 1
 
                 report.save()
-                reports_created += 1
 
         send_message('AI import finished, {} site reports created'.format(reports_created))
         return reports_created
