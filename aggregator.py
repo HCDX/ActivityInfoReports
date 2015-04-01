@@ -54,7 +54,7 @@ app.config['DEBUG'] = True
 app.config['SECRET_KEY'] = '123456790'
 app.config['MONGODB_SETTINGS'] = {
     'db': 'ai-aggregator',
-    'host': os.environ.get('MONGODB_URL', 'mongodb://localhost:27017/ai'),
+    'host': os.environ.get('MONGODB_URL', 'mongodb://localhost:27017/ai-aggregator'),
 }
 app.config.update(
     CELERY_BROKER_URL=os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
@@ -449,14 +449,14 @@ class ReportResource(Resource):
         'attributes': AttributeResource,
     }
     filters = {
-        'p_code': [NeNone, ops.Exact],
-        'partner_name': [ops.Exact, ops.Startswith],
-        'db_name': [ops.Exact, ops.Startswith],
-        'date': [ops.Exact, ops.Startswith],
-        'category': [ops.Exact, ops.Startswith],
-        'activity': [ops.Exact, ops.Startswith],
-        'location_name': [ops.Exact, ops.Startswith],
-        'indicator_name': [ops.Exact, ops.Startswith],
+        'p_code': [NeNone, ops.Exact, ops.Startswith],
+        'partner_name': [ops.Exact, ops.IStartswith, ops.IContains],
+        'db_name': [ops.Exact, ops.IStartswith, ops.IContains],
+        'date': [ops.Exact, ops.IStartswith, ops.IContains],
+        'category': [ops.Exact, ops.IStartswith, ops.IContains],
+        'activity': [ops.Exact, ops.IStartswith, ops.IContains],
+        'location_name': [ops.Exact, ops.IStartswith, ops.IContains],
+        'indicator_name': [ops.Exact, ops.IStartswith, ops.IContains],
     }
 
     def get_objects(self, all=False, qs=None, qfilter=None):

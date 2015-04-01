@@ -177,7 +177,7 @@ def import_ai(dbs, username='', password=''):
         db_info['_id'] = db_id
         ai.databases.update({'_id': db_id}, db_info, upsert=True)
 
-        print 'split out all the attribute groups into a separate collection'
+        # 'split out all the attribute groups into a separate collection'
         attribs = ai.databases.aggregate([
             {'$project': {'groups': '$activities.attributeGroups'}},
             {'$unwind': '$groups'},
@@ -254,7 +254,7 @@ def import_ai(dbs, username='', password=''):
                 report.comments = site.get('comments', None)
 
                 location = ai.locations.find_one({'_id': report.location_id})
-                if location and location['adminEntities'] is not None:
+                if location and 'adminEntities' in location:
                     try:
                         report.gov_code = str(location['adminEntities']['1370']['id'])
                         report.governorate = location['adminEntities']['1370']['name']
