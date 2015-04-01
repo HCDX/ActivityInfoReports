@@ -220,12 +220,14 @@ def import_ai(dbs, username='', password=''):
         for indicator in forms:
 
             site = sites[indicator['key']['Site']['id']]
-            attributes = [
-                attr for attr in ai.attributeGroups.find(
-                    {'attributes.id': {'$in': site['attributes']}},
-                    {'name': 1, 'mandatory': 1, "attributes.$": 1}
-                )
-            ]
+            attributes = []
+            if 'attributes' in site:
+                attributes = [
+                    attr for attr in ai.attributeGroups.find(
+                        {'attributes.id': {'$in': site['attributes']}},
+                        {'name': 1, 'mandatory': 1, "attributes.$": 1}
+                    )
+                ]
             if indicator['sum']:
                 report, created = Report.objects.get_or_create(
                     db_name=db_info['name'],
