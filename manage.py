@@ -174,6 +174,7 @@ def import_ai(dbs, username='', password=''):
         send_message('AI import started for database: {}'.format(db_info['name']))
 
         print 'store the whole database for future reference'
+        db_info['_id'] = db_id
         ai.databases.update({'_id': db_id}, db_info, upsert=True)
 
         print 'split out all the attribute groups into a separate collection'
