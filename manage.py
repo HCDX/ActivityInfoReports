@@ -212,7 +212,7 @@ def import_ai(dbs, username='', password=''):
             )
         )
 
-        print 'get all reports for these activities'
+        print 'get all reports for these activities: {}'.format(activities.keys())
         forms = client.get_cube(activities.keys())
 
         print 'processing {} forms'.format(len(forms))
