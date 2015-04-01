@@ -28,6 +28,7 @@ from flask.ext.mongorest import operators as ops
 from flask.ext.mongorest import methods
 
 import flask_login as login
+from flask_login import AnonymousUserMixin
 
 from bson import ObjectId
 from wtforms import form, fields, validators
@@ -70,7 +71,10 @@ app.json_encoder = JSONEncoder
 # Create user loader function
 @login_manager.user_loader
 def load_user(user_id):
-    return User.objects.get(id=user_id)
+    try:
+        User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return AnonymousUserMixin()
 
 
 # Create user model.
