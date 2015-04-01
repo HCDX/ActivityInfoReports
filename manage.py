@@ -173,10 +173,10 @@ def import_ai(dbs, username='', password=''):
         db_info = client.get_database(db_id)
         send_message('AI import started for database: {}'.format(db_info['name']))
 
-        # store the whole database for future reference
+        print 'store the whole database for future reference'
         ai.databases.update({'_id': db_id}, db_info, upsert=True)
 
-        # split out all the attribute groups into a separate collection
+        print 'split out all the attribute groups into a separate collection'
         attribs = ai.databases.aggregate([
             {'$project': {'groups': '$activities.attributeGroups'}},
             {'$unwind': '$groups'},
@@ -186,7 +186,7 @@ def import_ai(dbs, username='', password=''):
         for attrib in attribs['result'][0]['groups']:
             ai.attributeGroups.update({'_id': attrib['id']}, attrib, upsert=True)
 
-        # create an index of sites by id
+        print 'create an index of sites by id'
         sites = dict(
             (site['id'], dict(site, index=i))
             for (i, site) in enumerate(
@@ -194,7 +194,7 @@ def import_ai(dbs, username='', password=''):
             )
         )
 
-        # create an index of activities by id
+        print 'create an index of activities by id'
         activities = dict(
             (activity['id'], dict(activity, index=i))
             for (i, activity) in enumerate(
@@ -212,9 +212,10 @@ def import_ai(dbs, username='', password=''):
             )
         )
 
-        # get all reports for these activities
+        print 'get all reports for these activities'
         forms = client.get_cube(activities.keys())
 
+        print 'processing {} forms'.format(len(forms))
         for indicator in forms:
 
             site = sites[indicator['key']['Site']['id']]
@@ -225,6 +226,7 @@ def import_ai(dbs, username='', password=''):
                 )
             ]
             if indicator['sum']:
+                print 'adding report'
                 report, created = Report.objects.get_or_create(
                     db_name=db_info['name'],
                     date='{}-{}'.format(
@@ -274,7 +276,6 @@ def import_ai(dbs, username='', password=''):
                 report.save()
 
         send_message('AI import finished, {} site reports created'.format(reports_created))
-        return reports_created
 
 
 # Turn on debugger by default and reloader
