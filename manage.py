@@ -186,6 +186,7 @@ def import_ai(dbs, username='', password=''):
             {'$group': {'_id': "$_id", 'groups': {'$push': '$groups'}}},
         ])
         for attrib in attribs['result'][0]['groups']:
+            attrib['_id'] = attrib['_id']
             ai.attributeGroups.update({'_id': attrib['id']}, attrib, upsert=True)
 
         # 'create an index of sites by id'
@@ -229,7 +230,6 @@ def import_ai(dbs, username='', password=''):
                         {'name': 1, 'mandatory': 1, "attributes.$": 1}
                     )
                 ]
-            pprint.pprint(attributes)
             if indicator['sum']:
                 report, created = Report.objects.get_or_create(
                     db_name=db_info['name'],
