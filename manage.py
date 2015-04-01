@@ -165,11 +165,11 @@ def import_ai(dbs, username='', password=''):
     Imports data from Activity Info
     """
 
-    reports_created = 0
     db_ids = dbs.split(',')
     client = ActivityInfoClient(username, password)
 
     for db_id in db_ids:
+        reports_created = 0
         db_info = client.get_database(db_id)
         send_message('AI import started for database: {}'.format(db_info['name']))
 
@@ -273,8 +273,8 @@ def import_ai(dbs, username='', password=''):
                 report.save()
                 reports_created += 1
 
-    send_message('AI import finished, {} site reports created'.format(reports_created))
-    return reports_created
+        send_message('AI import finished, {} site reports created'.format(reports_created))
+        return reports_created
 
 
 # Turn on debugger by default and reloader
