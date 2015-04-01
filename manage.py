@@ -8,6 +8,7 @@ import random
 import datetime
 import requests
 import json
+import pprint
 
 from flask.ext.script import (
     Command,
@@ -228,7 +229,7 @@ def import_ai(dbs, username='', password=''):
                         {'name': 1, 'mandatory': 1, "attributes.$": 1}
                     )
                 ]
-            print attributes
+            pprint.pprint(attributes)
             if indicator['sum']:
                 report, created = Report.objects.get_or_create(
                     db_name=db_info['name'],
