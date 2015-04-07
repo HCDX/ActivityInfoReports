@@ -360,6 +360,12 @@ class ReportView(ModelView):
         'indicator_name',
         'value',
         'comments',
+        'gov_code',
+        'governorate',
+        'district_code',
+        'district',
+        'cadastral_code',
+        'cadastral'
     ]
 
     column_searchable_list = [
