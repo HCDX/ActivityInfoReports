@@ -245,6 +245,12 @@ class Report(db.Document):
             'location_name',
             'indicator_category',
             'indicator_name',
+            'gov_code',
+            'governorate',
+            'district_code',
+            'district',
+            'cadastral_code',
+            'cadastral'
         ]
     }
 
@@ -306,6 +312,12 @@ class ReportView(ModelView):
         'location_name',
         'indicator_name',
         'comments',
+        'gov_code',
+        'governorate',
+        'district_code',
+        'district',
+        'cadastral_code',
+        'cadastral',
         FilterByAttribute(
             'value',
             'RRP6 result',
@@ -360,6 +372,12 @@ class ReportView(ModelView):
         'location_name',
         'indicator_name',
         'comments',
+        'gov_code',
+        'governorate',
+        'district_code',
+        'district',
+        'cadastral_code',
+        'cadastral'
     ]
 
     form_subdocuments = {
