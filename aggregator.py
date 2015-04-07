@@ -22,6 +22,7 @@ from flask.ext.admin.babel import gettext
 from flask.ext.admin.contrib.mongoengine.filters import BaseMongoEngineFilter
 
 from flask.ext.mongorest import MongoRest
+from flask.ext.mongorest.authentication import AuthenticationBase
 from flask.ext.mongorest.views import ResourceView
 from flask.ext.mongorest.resources import Resource
 from flask.ext.mongorest import operators as ops
@@ -457,12 +458,15 @@ class ReportResource(Resource):
         'activity': [ops.Exact, ops.IStartswith, ops.IContains],
         'location_name': [ops.Exact, ops.IStartswith, ops.IContains],
         'indicator_name': [ops.Exact, ops.IStartswith, ops.IContains],
+        'governorate': [ops.Exact, ops.IStartswith, ops.IContains],
+        'district': [ops.Exact, ops.IStartswith, ops.IContains],
+        'cadastral': [ops.Exact, ops.IStartswith, ops.IContains],
     }
 
-    def get_objects(self, all=False, qs=None, qfilter=None):
-        return super(ReportResource, self).get_objects(
-            all=True, qs=qs, qfilter=qfilter
-        )
+    # def get_objects(self, all=False, qs=None, qfilter=None):
+    #     return super(ReportResource, self).get_objects(
+    #         all=True, qs=qs, qfilter=qfilter
+    #     )
 
 
 @api.register(name='reports', url='/reports/')

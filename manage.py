@@ -70,9 +70,9 @@ def update_sites(
         domain='unhcr',
         username='jcranwellward@unicef.org',
         password='Inn0vation',
-        list_name='ai_palestinian_camps_in_lebanon',
-        site_type='PC',
-        name_col='camp',
+        list_name='ai_municipality_v1',
+        site_type='MU',
+        name_col='municipality_name_en',
         code_col='pcode',
         target_list='51078'
 ):
@@ -95,7 +95,7 @@ def update_sites(
     bad_codes = []
     updated_sites = 0
     for row in sites['rows']:
-        p_code = row[code_col].strip()
+        p_code = str(row[code_col]).strip()
         site_name = row[name_col].encode('UTF-8')
         cad = ai['Cadastral Area'].find_one({'code': str(row['cad_code'])})
         if cad is None:
@@ -120,7 +120,7 @@ def update_sites(
             payload['E{}'.format(cad['levelId'])] = cad['id']
 
             response = ai_client.call_command('CreateLocation', **payload)
-            if response.status_code == requests.codes.ok:
+            if response.status_code == requests.codes.no_content:
                 updated_sites += 1
                 print 'Updated {}'.format(payload['name'])
             else:
