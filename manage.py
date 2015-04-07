@@ -265,8 +265,7 @@ def import_ai(dbs, username='', password=''):
                         report.cadastral_code = str(location['adminEntities']['1522']['id'])
                         report.cadastral = location['adminEntities']['1522']['name']
                     except Exception as exp:
-                        send_message('AI import error, location {}'.format(exp))
-
+                        pass
                 if created:
                     for a in attributes:
                         report.attributes.append(
