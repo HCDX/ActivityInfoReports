@@ -255,7 +255,7 @@ def import_ai(dbs, username='', password=''):
                 report.indicator_name = indicator['key']['Indicator']['label']
                 report.comments = site.get('comments', None)
 
-                location = ai.locations.find_one({'_id': report.location_id})
+                location = ai.locations.find_one({'id': report.location_id})
                 if location and 'adminEntities' in location:
                     try:
                         report.gov_code = str(location['adminEntities']['1370']['id'])
