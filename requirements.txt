@@ -16,3 +16,4 @@ requests
 flask-cors
 celery
 redis
+newrelic
