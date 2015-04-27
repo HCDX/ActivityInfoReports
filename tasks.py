@@ -1,5 +1,7 @@
 __author__ = 'jcranwellward'
 
+import os
+
 from celery import Celery
 from celery.schedules import crontab
 
@@ -34,8 +36,12 @@ celery = make_celery(app)
 
 @celery.task
 def run_import():
-    import_ai('1800,1883,1884,1885,1886,1887,1888,1889,1890',
-              username='jcranwellward@unicef.org', password='Inn0vation')
+
+    dbs = os.environ.get('AI_DBS')
+    username = os.environ.get('AI_USERNAME')
+    password = os.environ.get('AI_PASSWORD')
+    if dbs:
+        import_ai(dbs, username, password)
 
 
 @celery.task

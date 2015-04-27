@@ -31,7 +31,7 @@ ai = MongoClient(
 
 def send_message(message):
     requests.post(
-        'https://hooks.slack.com/services/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',
+        os.environ.get('SLACK_WEBHOOK'),
         data=json.dumps({'text': message})
     )
 
@@ -66,15 +66,15 @@ def update_levels(country_code='LB'):
 
 @manager.command
 def update_sites(
-        api_key='cad5c2fd1aa5236083743f54264b203d903f3a06',
-        domain='unhcr',
-        username='jcranwellward@unicef.org',
-        password='Inn0vation',
-        list_name='ai_municipality_v1',
-        site_type='MU',
-        name_col='municipality_name_en',
-        code_col='pcode',
-        target_list='51078'
+        api_key='',
+        domain='',
+        username='',
+        password='',
+        list_name='',
+        site_type='',
+        name_col='',
+        code_col='',
+        target_list=''
 ):
     carto_client = CartoDBAPIKey(api_key, domain)
 
@@ -108,7 +108,7 @@ def update_sites(
 
             payload = dict(
                 id=int(random.getrandbits(31)),
-                locationTypeId=target_list,
+                locationTypeId=int(target_list),
                 name='{}: {}'.format(site_type, site_name)[0:40],
                 axe='{}'.format(p_code),
                 latitude=row['latitude'],
