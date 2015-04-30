@@ -12,7 +12,7 @@ CELERYBEAT_SCHEDULE = {
     # Executes import every 12 hours
     'import-ai-everyday': {
         'task': 'tasks.run_import',
-        'schedule': crontab(minute=0, hour='*/12'),
+        'schedule': crontab(minute=0, hour=0),
     },
 }
 

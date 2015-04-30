@@ -433,8 +433,8 @@ class ReportView(ModelView):
             mimetype='text/csv'
         )
 
-    # def is_accessible(self):
-    #     return login.current_user.is_authenticated()
+    def is_accessible(self):
+        return login.current_user.is_authenticated()
 
 
 # Create admin
@@ -479,6 +479,7 @@ class ReportResource(Resource):
         'governorate': [ops.Exact, ops.IStartswith, ops.IContains],
         'district': [ops.Exact, ops.IStartswith, ops.IContains],
         'cadastral': [ops.Exact, ops.IStartswith, ops.IContains],
+        'cadastral_code': [ops.Exact, ops.IStartswith, ops.IContains],
     }
 
     # def get_objects(self, all=False, qs=None, qfilter=None):
