@@ -87,12 +87,10 @@ class User(db.Document):
     email = db.StringField()
     password = db.StringField()
     is_admin = db.BooleanField()
+    is_active = db.BooleanField()
 
     # Flask-Login integration
     def is_authenticated(self):
-        return True
-
-    def is_active(self):
         return True
 
     def is_anonymous(self):
@@ -434,7 +432,10 @@ class ReportView(ModelView):
         )
 
     def is_accessible(self):
-        return login.current_user.is_authenticated()
+        if login.current_user.is_authenticated():
+            if login.current_user.is_active:
+                return True
+        return False
 
 
 # Create admin
