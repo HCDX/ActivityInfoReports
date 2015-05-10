@@ -434,11 +434,11 @@ class ReportView(ModelView):
             mimetype='text/csv'
         )
 
-    def is_accessible(self):
-        if login.current_user.is_authenticated():
-            if login.current_user.is_activated:
-                return True
-        return False
+    # def is_accessible(self):
+    #     if login.current_user.is_authenticated():
+    #         if login.current_user.is_activated:
+    #             return True
+    #     return False
 
 
 # Create admin
