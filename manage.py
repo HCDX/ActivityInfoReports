@@ -161,7 +161,7 @@ def update_ai_locations(type_id, username='', password=''):
 
 
 @manager.command
-def import_ai(dbs, username='', password=''):
+def import_ai(dbs, username='', password='', date=''):
     """
     Imports data from Activity Info
     """
@@ -216,7 +216,11 @@ def import_ai(dbs, username='', password=''):
         )
 
         # 'get all reports for these activities: {}'.format(activities.keys())
-        forms = client.get_cube(activities.keys(), month=datetime.date.today().strftime('%Y-%m'))
+        if not date:  # if no date provided get for the current month
+            date = datetime.date.today().strftime('%Y-%m')
+        send_message('Pulling reports for date: {}'.format(date))
+
+        forms = client.get_cube(activities.keys(), month=date)
 
         # 'processing {} forms'.format(len(forms))
         for indicator in forms:
