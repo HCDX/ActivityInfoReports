@@ -85,7 +85,7 @@ def update_sites(
         (site['code'], dict(site, index=i))
         for (i, site) in enumerate(
             ai_client.get_locations(target_list)
-        )
+        ) if 'code' in site
     )
 
     sites = carto_client.sql(
@@ -104,7 +104,7 @@ def update_sites(
         caz = ai['Caza'].find_one({'id': cad['parentId']})
         gov = ai['Governorate'].find_one({'id': caz['parentId']})
 
-        if p_code not in existing:
+        if p_code not in existing and site_name:
 
             payload = dict(
                 id=int(random.getrandbits(31)),
@@ -216,7 +216,7 @@ def import_ai(dbs, username='', password=''):
         )
 
         # 'get all reports for these activities: {}'.format(activities.keys())
-        forms = client.get_cube(activities.keys())
+        forms = client.get_cube(activities.keys(), month=datetime.date.today().strftime('%Y-%m'))
 
         # 'processing {} forms'.format(len(forms))
         for indicator in forms:
