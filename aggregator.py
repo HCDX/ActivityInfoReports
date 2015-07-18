@@ -445,7 +445,7 @@ class ReportView(ModelView):
 admin = admin.Admin(app, 'ActivityInfo Reports', index_view=MyAdminIndexView(), base_template='my_master.html')
 
 # Add views
-#admin.add_view(ReportView(Report))
+admin.add_view(ReportView(Report))
 admin.add_view(AdminView(User))
 admin.add_view(CartoDBTableView(CartoDbTable))
 
